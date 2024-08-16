@@ -97,6 +97,11 @@ public:
         update_filter();
     }
 
+    void set_damping_coef(float m) {
+        m_m = m;
+        update_filter();
+    }
+
 private:
     void init_filter() {
         auto weights = compute_weights();
