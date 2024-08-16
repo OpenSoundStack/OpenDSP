@@ -5,6 +5,7 @@
 #include "filter/analog/lowpass.h"
 #include "filter/analog/highpass.h"
 #include "filter/analog/bandpass.h"
+#include "filter/audio/peak.h"
 
 #define WITHOUT_NUMPY
 #include "matplotlibcpp.h"
@@ -21,7 +22,9 @@ int main() {
     HPF_1ord<float> hpf{ 5000.0f, 48000.0f };
     HPF_2ord<float> hpf1{ 500.0f, 0.707f, 48000.0f };
 
-    BPF_2ord<float> bpf{ 5000.0f, 10.0f, 48000.0f };
+    BPF_2ord<float> bpf{ 50.0f, 5.0f, 48000.0f };
+
+    PeakFilter<float> peak{ 5000.0f, 10.0f, -100.0f, 48000.0f };
 
     int npoints = 10000;
 
@@ -45,11 +48,11 @@ int main() {
     auto start = high_resolution_clock::now();
 
     for(auto e : sigin) {
-        sigout.push_back(bpf.push_sample(e));
+        sigout.push_back(peak.push_sample(e));
     }
 
-    //plt::plot(sigin);
-    //plt::show();
+    plt::plot(sigin);
+    plt::show();
 
     plt::plot(sigout);
     plt::show();
