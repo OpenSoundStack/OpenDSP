@@ -7,6 +7,7 @@ add_library(OpenDSP SHARED
         utils/values.h
         utils/values.cpp
         filter/analog/highpass.h
+        filter/analog/bandpass.h
 )
 
 target_include_directories(OpenDSP PUBLIC ${CMAKE_SOURCE_DIR}/src)

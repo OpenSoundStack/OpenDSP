@@ -134,7 +134,7 @@ private:
     }
 
     float m_alpha;
-    float m_m; // Quality factor Q = 1/(2*m)
+    float m_m; // Damping coefficient; Q = 1/(2*m)
     float m_fc; // Cutoff frequency
     float m_sampling_freq;
 
