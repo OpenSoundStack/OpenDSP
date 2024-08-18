@@ -39,6 +39,10 @@ public:
         update_filter();
     }
 
+    IIRFilter<Tsample, 2>& get_filter() {
+        return m_filter;
+    }
+
 private:
     void init_filter() {
         auto weights = compute_weights();

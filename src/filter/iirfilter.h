@@ -4,6 +4,7 @@
 #include <array>
 
 #include "utils/sample_buffer.h"
+#include "utils/values.h"
 
 template<class Tsample, int order__>
 class IIRFilter {
@@ -35,6 +36,13 @@ public:
     void reset_filter() {
         m_input_buffer.clear_buffer();
         m_output_buffer.clear_buffer();
+    }
+
+    float freq_response_magnitude(float fr) {
+        float num = zpoly_magnitude<order__>(m_xweights, 2 * std::numbers::pi * fr);
+        float den = zpoly_magnitude<order__>(m_yweights, 2 * std::numbers::pi * fr);
+
+        return num / den;
     }
 
 private:

@@ -36,6 +36,10 @@ public:
         update_filter();
     }
 
+    IIRFilter<Tsample, 2>& get_filter() {
+        return m_filter;
+    }
+
 private:
     void init_filter() {
         auto weights = compute_weights();
@@ -54,6 +58,7 @@ private:
         float alpha = std::sin(w0) / (2.0f * rQ);
 
         float inv_com_den = 1.0f + (alpha / A);
+        inv_com_den = 1.0f / inv_com_den;
 
         float B = (-2.0f * std::cos(w0)) * inv_com_den;
         std::array<float, 3> xweights = {

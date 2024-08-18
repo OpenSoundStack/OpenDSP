@@ -24,7 +24,8 @@ int main() {
 
     BPF_2ord<float> bpf{ 50.0f, 5.0f, 48000.0f };
 
-    PeakFilter<float> peak{ 5000.0f, 10.0f, -100.0f, 48000.0f };
+    PeakFilter<float> peak{ 5000.0f, 10.0f, 5.0f, 48000.0f };
+    PeakFilter<float> peak2{ 200.0f, 0.3f, 3.0f, 48000.0f };
 
     int npoints = 10000;
 
@@ -45,13 +46,35 @@ int main() {
     std::vector<float> sigout{};
     sigout.reserve(npoints);
 
+    int mag_npoints = 150;
+
+    std::vector<float> frmag{};
+    frmag.reserve(mag_npoints);
+
     auto start = high_resolution_clock::now();
+
+    for(int i = 0; i < mag_npoints; i++) {
+        float fr = i / (2.0f * mag_npoints);
+
+        float mag1 = peak.get_filter().freq_response_magnitude(fr);
+        float mag2 = peak2.get_filter().freq_response_magnitude(fr);
+
+        float dbMag = 20.0f * log10(mag1 * mag2);
+
+        frmag.push_back(dbMag);
+    }
+
+    auto stop = high_resolution_clock::now();
+    auto dur = stop - start;
+    auto viz_gen = duration_cast<microseconds>(dur).count();
+
+    std::cout << "FRMAG duration : " << viz_gen << " us" << std::endl;
 
     for(auto e : sigin) {
         sigout.push_back(peak.push_sample(e));
     }
 
-    plt::plot(sigin);
+    plt::plot(frmag);
     plt::show();
 
     plt::plot(sigout);
