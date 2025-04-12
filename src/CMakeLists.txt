@@ -11,4 +11,4 @@ add_library(OpenDSP SHARED
         filter/audio/peak.h
 )
 
-target_include_directories(OpenDSP PUBLIC ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(OpenDSP PUBLIC ${PROJECT_SOURCE_DIR}/src)

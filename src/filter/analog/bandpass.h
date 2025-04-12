@@ -57,7 +57,7 @@ private:
     std::array<std::array<float, 3>, 2> compute_weights() {
         float alpha2 = m_alpha * m_alpha;
         float aQ = m_alpha / m_Q;
-        float inv_com_den = 1.0f + aQ + alpha2;
+        float inv_com_den = 1.0f + aQ + alpha2; // Inverse common denominator
         inv_com_den = 1.0f / inv_com_den;
 
         std::array<float, 3> xweights = {
