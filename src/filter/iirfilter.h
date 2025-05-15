@@ -2,6 +2,7 @@
 #define OPENDSP_IIRFILTER_H
 
 #include <array>
+#include <numbers>
 
 #include "utils/sample_buffer.h"
 #include "utils/values.h"
