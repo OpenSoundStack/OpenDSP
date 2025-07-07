@@ -16,7 +16,6 @@
 #include "filter/iirfilter.h"
 #include "utils/values.h"
 
-template<class Tsample>
 class LPF_1ord {
 public:
     LPF_1ord(const float fc, const float sampling_freq) {
@@ -30,11 +29,11 @@ public:
 
     ~LPF_1ord() = default;
 
-    Tsample push_sample(const Tsample& s) {
+    float push_sample(const float& s) {
         return m_filter.push_sample(s);
     }
 
-    Tsample get_output() const {
+    float get_output() const {
         return m_filter.get_output();
     }
 
@@ -45,14 +44,14 @@ public:
         update_filter();
     }
 
-    IIRFilter<Tsample, 1>& get_filter() {
+    IIRFilter<1>& get_filter() {
         return m_filter;
     }
 
 private:
     void init_filter() {
         auto weights = compute_weights();
-        m_filter = IIRFilter<Tsample, 1>(weights[0], weights[1]);
+        m_filter = IIRFilter<1>(weights[0], weights[1]);
     }
 
     void update_filter() {
@@ -80,10 +79,9 @@ private:
     float m_fc; // Cutoff frequency
     float m_sampling_freq;
 
-    IIRFilter<Tsample, 1> m_filter;
+    IIRFilter<1> m_filter;
 };
 
-template<class Tsample>
 class LPF_2ord {
 public:
     LPF_2ord(float fc, float m, float sampling_freq) {
@@ -98,11 +96,11 @@ public:
 
     ~LPF_2ord() = default;
 
-    Tsample push_sample(const Tsample& s) {
+    float push_sample(const float& s) {
         return m_filter.push_sample(s);
     }
 
-    Tsample get_output() const {
+    float get_output() const {
         return m_filter.get_output();
     }
 
@@ -118,14 +116,14 @@ public:
         update_filter();
     }
 
-    IIRFilter<Tsample, 2>& get_filter() {
+    IIRFilter<2>& get_filter() {
         return m_filter;
     }
 
 private:
     void init_filter() {
         auto weights = compute_weights();
-        m_filter = IIRFilter<Tsample, 2>(weights[0], weights[1]);
+        m_filter = IIRFilter<2>(weights[0], weights[1]);
     }
 
     void update_filter() {
@@ -158,7 +156,7 @@ private:
     float m_fc; // Cutoff frequency
     float m_sampling_freq;
 
-    IIRFilter<Tsample, 2> m_filter;
+    IIRFilter<2> m_filter;
 };
 
 #endif //OPENDSP_LOWPASS_H

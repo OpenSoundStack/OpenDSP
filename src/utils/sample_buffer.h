@@ -15,7 +15,7 @@
 
 #include <cstring>
 
-template<class T, int buflen__>
+template<int buflen__>
 class SampleBuffer {
 public:
     SampleBuffer() {
@@ -25,29 +25,34 @@ public:
     ~SampleBuffer() = default;
 
     void shift_buffer() {
-        std::memcpy(m_buffer + 1, m_buffer, sizeof(T) * (buflen__ - 1));
+        auto* data_ptr = m_buffer.data();
+        std::memcpy(data_ptr + 1, data_ptr, sizeof(float) * (buflen__ - 1));
     }
 
-    void push_sample(const T& sample) {
+    void push_sample(const float& sample) {
         shift_buffer();
         m_buffer[0] = sample;
     }
 
     void clear_buffer() {
         // Zeroing the buffer
-        std::memset(m_buffer, 0, sizeof(m_buffer));
+        std::memset(m_buffer.data(), 0, m_buffer.size());
     }
 
-    T operator[](const int idx) const {
+    float operator[](const int idx) const {
         return m_buffer[idx];
     }
 
-    T& operator[](const int idx) {
+    float& operator[](const int idx) {
         return m_buffer[idx];
+    }
+
+    std::array<float, buflen__>& as_array() {
+        return m_buffer;
     }
 
 private:
-    T m_buffer[buflen__];
+    std::array<float, buflen__> m_buffer;
 };
 
 #endif //OPENDSP_SAMPLE_BUFFER_H

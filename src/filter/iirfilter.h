@@ -18,8 +18,9 @@
 
 #include "utils/sample_buffer.h"
 #include "utils/values.h"
+#include "simd/simd_op.h"
 
-template<class Tsample, int order__>
+template<int order__>
 class IIRFilter {
 public:
     IIRFilter(const std::array<float, order__ + 1>& xweights, const std::array<float, order__ + 1>& yweights) {
@@ -29,7 +30,7 @@ public:
 
     IIRFilter() = default;
 
-    Tsample push_sample(const Tsample& input) {
+    float push_sample(const float& input) {
         m_input_buffer.push_sample(input);
         m_output_buffer.shift_buffer();
 
@@ -37,7 +38,7 @@ public:
         return m_output_buffer[0];
     }
 
-    Tsample get_output() const {
+    float get_output() const {
         return m_output_buffer[0];
     }
 
@@ -60,29 +61,24 @@ public:
 
 private:
     void update_filter() {
-        Tsample x_wsum = wsum<order__ + 1, 0>(m_input_buffer, m_xweights); // X * xi where i ranges from 0 to order
-        Tsample y_wsum = wsum<order__ + 1, 1>(m_output_buffer, m_yweights); // Y * yi where i ranges from 1 to order
+        float x_wsum = wsum<order__ + 1, 0>(m_input_buffer, m_xweights); // X * xi where i ranges from 0 to order
+        float y_wsum = wsum<order__ + 1, 1>(m_output_buffer, m_yweights); // Y * yi where i ranges from 1 to order
 
-        Tsample new_sample = (x_wsum - y_wsum);
+        float new_sample = (x_wsum - y_wsum);
         m_output_buffer[0] = new_sample;
     }
 
     template<int size__, int init__>
-    Tsample wsum(SampleBuffer<Tsample, size__> samples, std::array<float, size__> weights) {
-        Tsample accumulator = 0;
-
-        // Samples are ordered in this way : samples[i] = X(n - i)
-        // Weights are ordered in the same way : weights[i] = a_i
-        // We are doing the sum of X(n - i) * a_i
-        for(int i = init__; i < size__; i++) {
-            accumulator += samples[i] * weights[i];
-        }
-
-        return accumulator;
+    float wsum(SampleBuffer<size__>& samples, std::array<float, size__>& weights) {
+        auto& sarr = samples.as_array();
+        return mulacc<size__>(
+            std::ranges::subrange(sarr.begin() + init__, sarr.end()),
+            std::ranges::subrange(weights.begin() + init__, weights.end())
+        );
     }
 
-    SampleBuffer<Tsample, order__ + 1> m_input_buffer;
-    SampleBuffer<Tsample, order__ + 1> m_output_buffer;
+    SampleBuffer<order__ + 1> m_input_buffer;
+    SampleBuffer<order__ + 1> m_output_buffer;
 
     std::array<float, order__ + 1> m_xweights;
     std::array<float, order__ + 1> m_yweights;

@@ -16,7 +16,6 @@
 #include "filter/iirfilter.h"
 #include "utils/values.h"
 
-template<class Tsample>
 class BPF_2ord {
 public:
     BPF_2ord(float f0, float Q, float sampling_freq) {
@@ -31,11 +30,11 @@ public:
 
     ~BPF_2ord() = default;
 
-    Tsample push_sample(const Tsample& s) {
+    float push_sample(const float& s) {
         return m_filter.push_sample(s);
     }
 
-    Tsample get_output() const {
+    float get_output() const {
         return m_filter.get_output();
     }
 
@@ -51,14 +50,14 @@ public:
         update_filter();
     }
 
-    IIRFilter<Tsample, 2>& get_filter() {
+    IIRFilter<2>& get_filter() {
         return m_filter;
     }
 
 private:
     void init_filter() {
         auto weights = compute_weights();
-        m_filter = IIRFilter<Tsample, 2>(weights[0], weights[1]);
+        m_filter = IIRFilter<2>(weights[0], weights[1]);
     }
 
     void update_filter() {
@@ -92,7 +91,7 @@ private:
     float m_sampling_freq;
     float m_alpha;
 
-    IIRFilter<Tsample, 2> m_filter;
+    IIRFilter<2> m_filter;
 };
 
 #endif //OPENDSP_BANDPASS_H

@@ -16,7 +16,6 @@
 #include "filter/iirfilter.h"
 #include "utils/values.h"
 
-template<class Tsample>
 class PeakFilter {
 public:
     PeakFilter(float fc, float Q, float gain, float sampling_freq) {
@@ -30,11 +29,11 @@ public:
 
     ~PeakFilter() = default;
 
-    Tsample push_sample(const Tsample& s) {
+    float push_sample(const float& s) {
         return m_filter.push_sample(s);
     }
 
-    Tsample get_output() const {
+    float get_output() const {
         return m_filter.get_output();
     }
 
@@ -48,14 +47,14 @@ public:
         update_filter();
     }
 
-    IIRFilter<Tsample, 2>& get_filter() {
+    IIRFilter<2>& get_filter() {
         return m_filter;
     }
 
 private:
     void init_filter() {
         auto weights = compute_weights();
-        m_filter = IIRFilter<Tsample, 2>(weights[0], weights[1]);
+        m_filter = IIRFilter<2>(weights[0], weights[1]);
     }
 
     void update_filter() {
@@ -93,7 +92,7 @@ private:
     float m_gain;
     float m_sampling_freq;
 
-    IIRFilter<Tsample, 2> m_filter;
+    IIRFilter<2> m_filter;
 };
 
 #endif //OPENDSP_PEAK_H
