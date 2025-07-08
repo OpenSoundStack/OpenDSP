@@ -25,6 +25,8 @@
 template<int __op_size>
 float mulacc_no_simd(const std::ranges::subrange<float*>& a, const std::ranges::subrange<float*>& b) {
     float acc = 0.0f;
+
+#pragma unroll
     for (int i = 0; i < __op_size; i++) {
         acc += a[i] * b[i];
     }
@@ -39,35 +41,44 @@ float mulacc_no_simd(const std::ranges::subrange<float*>& a, const std::ranges::
 
 template<int __op_size>
 float mulacc(const std::ranges::subrange<float*>& a, const std::ranges::subrange<float*>& b) {
-    if (__op_size > 4) {
-        assert(false && "Not implemented yet");
-        return 0.0f;
-    } else {
-        float32x4_t zeros = {0.0f, 0.0f, 0.0f, 0.0f};
-
-        if constexpr (__op_size == 1) {
-            // Trivial, no need for NEON
-            return a[0] * b[0];
-        } else if (__op_size == 2) {
-            float32x4_t op_a = { a[0], a[1], 0.0f, 0.0f };
-            float32x4_t op_b = { b[0], b[1], 0.0f, 0.0f };
-
-            __INTERNAL_MULACC_RETF(op_a, op_b, zero);
-        } else if (__op_size == 3) {
-            float32x4_t op_a = { a[0], a[1], a[2], 0.0f};
-            float32x4_t op_b = { b[0], b[1], b[2], 0.0f};
-
-            __INTERNAL_MULACC_RETF(op_a, op_b, zero);
-        } else if (__op_size == 4) {
-            float32x4_t op_a = vld1q_f32(a.data());
-            float32x4_t op_b = vld1q_f32(b.data());
-
-            __INTERNAL_MULACC_RETF(op_a, op_b, zero);
-        }
-
+    if constexpr (__op_size > 4) {
+        return mulacc_no_simd<__op_size>(a, b);
     }
 
     return 0.0f;
+}
+
+template<>
+inline float mulacc<1>(const std::ranges::subrange<float*>& a, const std::ranges::subrange<float*>& b) {
+    // Trivial, no need for NEON
+    return a[0] * b[0];
+}
+
+template<>
+inline float mulacc<2>(const std::ranges::subrange<float*>& a, const std::ranges::subrange<float*>& b) {
+    constexpr float32x4_t zeros = {0.0f, 0.0f, 0.0f, 0.0f};
+    float32x4_t op_a = { a[0], a[1], 0.0f, 0.0f };
+    float32x4_t op_b = { b[0], b[1], 0.0f, 0.0f };
+
+    __INTERNAL_MULACC_RETF(op_a, op_b, zero);
+}
+
+template<>
+inline float mulacc<3>(const std::ranges::subrange<float*>& a, const std::ranges::subrange<float*>& b) {
+    constexpr float32x4_t zeros = {0.0f, 0.0f, 0.0f, 0.0f};
+    float32x4_t op_a = { a[0], a[1], a[2], 0.0f };
+    float32x4_t op_b = { b[0], b[1], b[2], 0.0f };
+
+    __INTERNAL_MULACC_RETF(op_a, op_b, zero);
+}
+
+template<>
+inline float mulacc<4>(const std::ranges::subrange<float*>& a, const std::ranges::subrange<float*>& b) {
+    constexpr float32x4_t zeros = {0.0f, 0.0f, 0.0f, 0.0f};
+    float32x4_t op_a = { a[0], a[1], a[2], a[3] };
+    float32x4_t op_b = { b[0], b[1], b[2], b[3] };
+
+    __INTERNAL_MULACC_RETF(op_a, op_b, zero);
 }
 
 #else

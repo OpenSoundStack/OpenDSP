@@ -26,6 +26,11 @@ public:
     IIRFilter(const std::array<float, order__ + 1>& xweights, const std::array<float, order__ + 1>& yweights) {
         m_xweights = xweights;
         m_yweights = yweights;
+
+        m_xw_zeropad = std::ranges::subrange(m_xweights);
+        m_yw_zeropad = std::ranges::subrange(m_yweights);
+        m_xw_onepad = std::ranges::subrange(m_xweights.begin() + 1, m_xweights.end());
+        m_yw_onepad = std::ranges::subrange(m_yweights.begin() + 1, m_xweights.end());
     }
 
     IIRFilter() = default;
@@ -61,20 +66,11 @@ public:
 
 private:
     void update_filter() {
-        float x_wsum = wsum<order__ + 1, 0>(m_input_buffer, m_xweights); // X * xi where i ranges from 0 to order
-        float y_wsum = wsum<order__ + 1, 1>(m_output_buffer, m_yweights); // Y * yi where i ranges from 1 to order
+        float x_wsum = mulacc_no_simd<order__ + 1>(m_input_buffer.as_subrange(), m_xw_zeropad); // X * xi where i ranges from 0 to order
+        float y_wsum = mulacc_no_simd<order__ + 1>(m_output_buffer.as_subrange_padded(), m_yw_onepad); // Y * yi where i ranges from 1 to order
 
         float new_sample = (x_wsum - y_wsum);
         m_output_buffer[0] = new_sample;
-    }
-
-    template<int size__, int init__>
-    float wsum(SampleBuffer<size__>& samples, std::array<float, size__>& weights) {
-        auto& sarr = samples.as_array();
-        return mulacc<size__>(
-            std::ranges::subrange(sarr.begin() + init__, sarr.end()),
-            std::ranges::subrange(weights.begin() + init__, weights.end())
-        );
     }
 
     SampleBuffer<order__ + 1> m_input_buffer;
@@ -82,7 +78,11 @@ private:
 
     std::array<float, order__ + 1> m_xweights;
     std::array<float, order__ + 1> m_yweights;
-};
 
+    std::ranges::subrange<float*> m_xw_zeropad;
+    std::ranges::subrange<float*> m_yw_zeropad;
+    std::ranges::subrange<float*> m_xw_onepad;
+    std::ranges::subrange<float*> m_yw_onepad;
+};
 
 #endif //OPENDSP_IIRFILTER_H
