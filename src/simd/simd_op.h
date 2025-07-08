@@ -17,6 +17,7 @@
 #include "immintrin.h"
 #elif defined(__arm__) || defined(__aarch64__)
 #include <arm_neon.h>
+#define SIMD_ENABLE
 #endif
 
 #include <ranges>
@@ -32,10 +33,10 @@ float mulacc_no_simd(const float* a, const float* b) {
     return acc;
 }
 
-#if (defined(__arm__) || defined(__aarch64__))
+#if defined(SIMD_ENABLE)
 
 // Finish mul acc and return
-#define __INTERNAL_MULACC_RETF(op_a, op_b, zero) float32x4_t result = vfmaq_f32(zeros, op_a, op_b); return vaddvq_f32(result);
+#define __INTERNAL_MULACC_RETF(op_a, op_b, zero) float32x4_t result = vfmaq_f32(zero, op_a, op_b); return vaddvq_f32(result);
 
 template<int __op_size, int init__>
 float mulacc(const float* a, const float* b) {
@@ -52,17 +53,17 @@ float mulacc(const float* a, const float* b) {
             float32x4_t op_a = { a[init__], a[init__ + 1], 0.0f, 0.0f };
             float32x4_t op_b = { b[init__], b[init__ + 1], 0.0f, 0.0f };
 
-            __INTERNAL_MULACC_RETF(op_a, op_b, zero);
+            __INTERNAL_MULACC_RETF(op_a, op_b, zeros);
         } else if (__op_size - init__ == 3) {
             float32x4_t op_a = { a[init__], a[init__ + 1], a[init__ + 2], 0.0f};
             float32x4_t op_b = { b[init__], b[init__ + 1], b[init__ + 2], 0.0f};
 
-            __INTERNAL_MULACC_RETF(op_a, op_b, zero);
+            __INTERNAL_MULACC_RETF(op_a, op_b, zeros);
         } else if (__op_size - init__ == 4) {
             float32x4_t op_a = { a[init__], a[init__ + 1], a[init__ + 2], a[init__ + 3]};
             float32x4_t op_b = { b[init__], b[init__ + 1], b[init__ + 2], b[init__ + 3]};
 
-            __INTERNAL_MULACC_RETF(op_a, op_b, zero);
+            __INTERNAL_MULACC_RETF(op_a, op_b, zeros);
         }
 
     }
@@ -72,9 +73,9 @@ float mulacc(const float* a, const float* b) {
 
 #else
 
-template<int __op_size>
-float mulacc(const std::ranges::subrange<float*>& a, const std::ranges::subrange<float*>& b) {
-    return mulacc_no_simd<__op_size>(a, b);
+template<int op_size__, int init__>
+float mulacc(const float* a, const float* b) {
+    return mulacc_no_simd<op_size__, init__>(a, b);
 }
 
 #endif

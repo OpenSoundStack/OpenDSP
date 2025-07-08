@@ -59,6 +59,14 @@ public:
         return num / den;
     }
 
+    std::array<float, order__ + 1> get_xweights() const {
+        return m_xweights;
+    }
+
+    std::array<float, order__ + 1> get_yweights() const {
+        return m_yweights;
+    }
+
 private:
     void update_filter() {
         float x_wsum = mulacc<order__ + 1, 0>(m_input_buffer.get_buffer(), m_xweights.data()); // X * xi where i ranges from 0 to order
