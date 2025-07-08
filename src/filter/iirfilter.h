@@ -61,8 +61,8 @@ public:
 
 private:
     void update_filter() {
-        float x_wsum = mulacc_no_simd<order__ + 1, 0>(m_input_buffer.as_array(), m_xweights); // X * xi where i ranges from 0 to order
-        float y_wsum = mulacc_no_simd<order__ + 1, 1>(m_output_buffer.as_array(), m_yweights); // Y * yi where i ranges from 1 to order
+        float x_wsum = mulacc<order__ + 1, 0>(m_input_buffer.get_buffer(), m_xweights.data()); // X * xi where i ranges from 0 to order
+        float y_wsum = mulacc<order__ + 1, 1>(m_output_buffer.get_buffer(), m_yweights.data()); // Y * yi where i ranges from 1 to order
 
         float new_sample = (x_wsum - y_wsum);
         m_output_buffer[0] = new_sample;

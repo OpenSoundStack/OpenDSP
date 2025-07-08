@@ -23,7 +23,7 @@
 #include <cassert>
 
 template<int op_size__, int init__>
-float mulacc_no_simd(const std::ranges::subrange<float*>& a, const std::ranges::subrange<float*>& b) {
+float mulacc_no_simd(const float* a, const float* b) {
     float acc = 0.0f;
     for (int i = init__; i < op_size__; i++) {
         acc += a[i] * b[i];
@@ -37,30 +37,30 @@ float mulacc_no_simd(const std::ranges::subrange<float*>& a, const std::ranges::
 // Finish mul acc and return
 #define __INTERNAL_MULACC_RETF(op_a, op_b, zero) float32x4_t result = vfmaq_f32(zeros, op_a, op_b); return vaddvq_f32(result);
 
-template<int __op_size>
-float mulacc(const std::ranges::subrange<float*>& a, const std::ranges::subrange<float*>& b) {
+template<int __op_size, int init__>
+float mulacc(const float* a, const float* b) {
     if (__op_size > 4) {
         assert(false && "Not implemented yet");
         return 0.0f;
     } else {
         float32x4_t zeros = {0.0f, 0.0f, 0.0f, 0.0f};
 
-        if constexpr (__op_size == 1) {
+        if constexpr (__op_size - init__ == 1) {
             // Trivial, no need for NEON
-            return a[0] * b[0];
-        } else if (__op_size == 2) {
-            float32x4_t op_a = { a[0], a[1], 0.0f, 0.0f };
-            float32x4_t op_b = { b[0], b[1], 0.0f, 0.0f };
+            return a[init__] * b[init__];
+        } else if (__op_size - init__ == 2) {
+            float32x4_t op_a = { a[init__], a[init__ + 1], 0.0f, 0.0f };
+            float32x4_t op_b = { b[init__], b[init__ + 1], 0.0f, 0.0f };
 
             __INTERNAL_MULACC_RETF(op_a, op_b, zero);
-        } else if (__op_size == 3) {
-            float32x4_t op_a = { a[0], a[1], a[2], 0.0f};
-            float32x4_t op_b = { b[0], b[1], b[2], 0.0f};
+        } else if (__op_size - init__ == 3) {
+            float32x4_t op_a = { a[init__], a[init__ + 1], a[init__ + 2], 0.0f};
+            float32x4_t op_b = { b[init__], b[init__ + 1], b[init__ + 2], 0.0f};
 
             __INTERNAL_MULACC_RETF(op_a, op_b, zero);
-        } else if (__op_size == 4) {
-            float32x4_t op_a = vld1q_f32(a.data());
-            float32x4_t op_b = vld1q_f32(b.data());
+        } else if (__op_size - init__ == 4) {
+            float32x4_t op_a = { a[init__], a[init__ + 1], a[init__ + 2], a[init__ + 3]};
+            float32x4_t op_b = { b[init__], b[init__ + 1], b[init__ + 2], b[init__ + 3]};
 
             __INTERNAL_MULACC_RETF(op_a, op_b, zero);
         }

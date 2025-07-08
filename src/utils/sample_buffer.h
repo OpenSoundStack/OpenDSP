@@ -21,14 +21,12 @@ class SampleBuffer {
 public:
     SampleBuffer() {
         clear_buffer();
-        m_buffer_range = std::ranges::subrange(m_buffer.begin(), m_buffer.end());
     }
 
     ~SampleBuffer() = default;
 
     void shift_buffer() {
-        auto* data_ptr = m_buffer.data();
-        std::memcpy(data_ptr + 1, data_ptr, sizeof(float) * (buflen__ - 1));
+        std::memcpy(m_buffer + 1, m_buffer, sizeof(float) * (buflen__ - 1));
     }
 
     void push_sample(const float& sample) {
@@ -38,7 +36,7 @@ public:
 
     void clear_buffer() {
         // Zeroing the buffer
-        std::memset(m_buffer.data(), 0, m_buffer.size());
+        std::memset(m_buffer, 0, sizeof(float) * buflen__);
     }
 
     float operator[](const int idx) const {
@@ -49,17 +47,12 @@ public:
         return m_buffer[idx];
     }
 
-    std::array<float, buflen__>& as_array() {
+    float* get_buffer() {
         return m_buffer;
     }
 
-    std::ranges::subrange<float*>& as_subrange() {
-        return m_buffer_range;
-    }
-
 private:
-    std::array<float, buflen__> m_buffer;
-    std::ranges::subrange<float*> m_buffer_range;
+    float m_buffer[buflen__];
 };
 
 #endif //OPENDSP_SAMPLE_BUFFER_H
