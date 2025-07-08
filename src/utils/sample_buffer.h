@@ -14,12 +14,14 @@
 #define OPENDSP_SAMPLE_BUFFER_H
 
 #include <cstring>
+#include <ranges>
 
 template<int buflen__>
 class SampleBuffer {
 public:
     SampleBuffer() {
         clear_buffer();
+        m_buffer_range = std::ranges::subrange(m_buffer.begin(), m_buffer.end());
     }
 
     ~SampleBuffer() = default;
@@ -51,8 +53,13 @@ public:
         return m_buffer;
     }
 
+    std::ranges::subrange<float*>& as_subrange() {
+        return m_buffer_range;
+    }
+
 private:
     std::array<float, buflen__> m_buffer;
+    std::ranges::subrange<float*> m_buffer_range;
 };
 
 #endif //OPENDSP_SAMPLE_BUFFER_H

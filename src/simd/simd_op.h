@@ -22,10 +22,10 @@
 #include <ranges>
 #include <cassert>
 
-template<int __op_size>
+template<int op_size__, int init__>
 float mulacc_no_simd(const std::ranges::subrange<float*>& a, const std::ranges::subrange<float*>& b) {
     float acc = 0.0f;
-    for (int i = 0; i < __op_size; i++) {
+    for (int i = init__; i < op_size__; i++) {
         acc += a[i] * b[i];
     }
 
@@ -74,7 +74,7 @@ float mulacc(const std::ranges::subrange<float*>& a, const std::ranges::subrange
 
 template<int __op_size>
 float mulacc(const std::ranges::subrange<float*>& a, const std::ranges::subrange<float*>& b) {
-    return mulacc_no_simd(a, b);
+    return mulacc_no_simd<__op_size>(a, b);
 }
 
 #endif
