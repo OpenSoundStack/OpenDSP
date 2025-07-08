@@ -68,15 +68,6 @@ private:
         m_output_buffer[0] = new_sample;
     }
 
-    template<int size__, int init__>
-    float wsum(SampleBuffer<size__>& samples, std::array<float, size__>& weights) {
-        auto& sarr = samples.as_array();
-        return mulacc<size__>(
-            std::ranges::subrange(sarr.begin() + init__, sarr.end()),
-            std::ranges::subrange(weights.begin() + init__, weights.end())
-        );
-    }
-
     SampleBuffer<order__ + 1> m_input_buffer;
     SampleBuffer<order__ + 1> m_output_buffer;
 
