@@ -9,7 +9,7 @@ add_library(OpenDSP SHARED
         filter/analog/highpass.h
         filter/analog/bandpass.h
         filter/audio/peak.h
-        simd/matmul.h
+        simd/matmath.h
         filter/iir_chain.h
 )
 
