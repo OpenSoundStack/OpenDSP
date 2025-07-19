@@ -18,10 +18,10 @@
 
 class PeakFilter {
 public:
-    PeakFilter(float fc, float Q, float gain, float sampling_freq) {
+    PeakFilter(float fc, float Q, float gain_db, float sampling_freq) {
         m_fc = fc;
         m_Q = Q;
-        m_gain = gain;
+        m_gain = gain_db;
         m_sampling_freq = sampling_freq;
 
         init_filter();
@@ -47,6 +47,11 @@ public:
         update_filter();
     }
 
+    void set_gain(float gain) {
+        m_gain = gain;
+        update_filter();
+    }
+
     IIRFilter<2>& get_filter() {
         return m_filter;
     }
@@ -64,7 +69,7 @@ private:
 
     std::array<std::array<float, 3>, 2> compute_weights() {
         float A = std::pow(10.0f, m_gain / 40.0f);
-        float rQ = m_Q / A;
+        float rQ = m_Q;
         float w0 = 2.0f * std::numbers::pi * (m_fc / m_sampling_freq);
         float alpha = std::sin(w0) / (2.0f * rQ);
 
