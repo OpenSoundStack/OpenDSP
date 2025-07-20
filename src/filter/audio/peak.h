@@ -52,6 +52,10 @@ public:
         update_filter();
     }
 
+    float get_gain() {
+        return m_gain;
+    }
+
     IIRFilter<2>& get_filter() {
         return m_filter;
     }
