@@ -14,11 +14,8 @@
 #include <chrono>
 #include <cmath>
 
-#include "filter/analog/lowpass.h"
-#include "filter/analog/highpass.h"
-#include "filter/analog/bandpass.h"
-#include "filter/audio/peak.h"
-#include "filter/iir_chain.h"
+#include "dynamics/enveloppe.h"
+#include "dynamics/dynamics.h"
 
 #define WITHOUT_NUMPY
 #include "matplotlibcpp.h"
@@ -29,82 +26,61 @@ using namespace std::chrono;
 using namespace std::chrono_literals;
 
 int main() {
-    LPF_2ord lpf{ 10000.0, 0.707, 48000.0 };
-    LPF_1ord lpf1{500.0, 48000.0};
+    std::vector<float> comp_test{};
 
-    HPF_1ord hpf1{ 1000.0f, 48000.0f };
-    HPF_2ord hpf{ 1000.0f, 0.707f, 48000.0f };
+    // Generating a pulse for dynamics analysis
+    int low_phase_dur_ms = 150;
+    int high_phase_dur_ms = 60;
+    int total_dur_samples = (2 * low_phase_dur_ms + high_phase_dur_ms) * 96;
 
-    BPF_2ord bpf{ 50.0f, 5.0f, 48000.0f };
+    for (int j = 0; j < 2; j++) {
+        for (int i = 0; i < total_dur_samples; i++) {
+            int time = i / 96;
+            float factor = 1.0f;
 
-    PeakFilter peak{ 5000.0f, 10.0f, -10.0f, 48000.0f };
-    PeakFilter peak2{ 1000.0f, 10.0f, -10.0f, 48000.0f };
+            if ((time > low_phase_dur_ms) && (time < (low_phase_dur_ms + high_phase_dur_ms))) {
+                factor = 2.0f;
+            }
 
-    int npoints = 10000;
-
-    std::vector<float> sigin{};
-    sigin.reserve(npoints);
-
-    float f1 = 200;
-    float f2 = 1000;
-    float f3 = 5000;
-    for(int n = 0; n < npoints; n++) {
-        sigin.push_back(
-                sin(2.0f * 3.141592f * f1 * n * (1/48000.0f)) +
-                /*sin(2.0f * 3.141592f * f2 * n * (1/48000.0f)) + */
-                sin(2.0f * 3.141592f * f3 * n * (1/48000.0f))
-        );
+            comp_test.push_back(
+                sin(2.0f * 3.141592f * 5000.0f * i * (1.0f/96000.0f)) * factor
+            );
+        }
     }
 
-    std::vector<float> sigout{};
-    sigout.reserve(npoints);
+    int attack = 70;
+    Enveloppe env_in{attack, 96000};
+    std::vector<float> enveloppe_in;
 
-    std::vector<float> sigout_chain{};
-    sigout_chain.reserve(npoints);
-
-    int mag_npoints = 150;
-
-    std::vector<float> frmag{};
-    frmag.reserve(mag_npoints);
-
-    auto start = high_resolution_clock::now();
-
-    for(int i = 0; i < mag_npoints; i++) {
-        float fr = i / (2.0f * mag_npoints);
-
-        float mag1 = hpf.get_filter().freq_response_magnitude(fr);
-        float mag2 = lpf.get_filter().freq_response_magnitude(fr);
-
-        float dbMag = 20.0f * log10(mag1 * mag2);
-
-        frmag.push_back(dbMag);
+    for (auto& s : comp_test) {
+        enveloppe_in.push_back((env_in.push_sample(s)));
     }
 
-    IIRChain<2> chained_filter{};
-    chained_filter.add_filter(hpf.get_filter());
-    chained_filter.add_filter(lpf.get_filter());
+    std::vector<float> gain_red;
+    std::vector<float> signal_out;
+    Dynamics dyn{[](float level_lin) {
+        float threshold = 0.72f;
+        if (level_lin > threshold) {
+            return 0.5f * level_lin + 0.5f * threshold;
+        } else {
+            return 1.0f * level_lin;
+        }
+    }, attack, 150, 10, 96000};
 
-    auto stop = high_resolution_clock::now();
-    auto dur = stop - start;
-    auto viz_gen = duration_cast<microseconds>(dur).count();
-
-    std::cout << "FRMAG duration : " << viz_gen << " us" << std::endl;
-
-    for(auto e : sigin) {
-        float a = hpf.push_sample(e);
-        float b = lpf.push_sample(e);
-        sigout.push_back(a * b);
-
-        sigout_chain.push_back(chained_filter.push_sample(e));
+    for (auto& s : comp_test) {
+        gain_red.push_back((dyn.push_sample(s)));
     }
 
-    plt::plot(frmag);
+    for (int i = 0; i < comp_test.size(); i++) {
+        signal_out.push_back(comp_test[i] * gain_red[i]);
+    }
+
+    plt::plot(gain_red);
+    //plt::plot(enveloppe_out);
+    plt::plot(enveloppe_in);
     plt::show();
 
-    plt::plot(sigout);
-    plt::show();
-
-    plt::plot(sigout_chain);
+    plt::plot(signal_out);
     plt::show();
 
     return 0;
