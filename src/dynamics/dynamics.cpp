@@ -72,10 +72,12 @@ float Dynamics::adsr_process(float sample) {
 float Dynamics::push_sample(float sample) {
     float level_lin_enveloppe = adsr_process(sample);
     float selected_enveloppe = m_state == DynamicState::DYN_RELEASE ? m_delayed_enveloppe : m_enveloppe;
+    selected_enveloppe = 10.0f * std::log10(selected_enveloppe);
 
     float transfer_ratio = 1.0f;
     if (level_lin_enveloppe != 0.0f) {
-        transfer_ratio = m_transfer_function(selected_enveloppe) / selected_enveloppe;
+        transfer_ratio = m_transfer_function(selected_enveloppe);
+        transfer_ratio = std::pow(10.0f, transfer_ratio / 20.0f);
     }
 
     constexpr float hysteresis = 0.001f;

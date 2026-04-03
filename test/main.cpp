@@ -36,10 +36,10 @@ int main() {
     for (int j = 0; j < 2; j++) {
         for (int i = 0; i < total_dur_samples; i++) {
             int time = i / 96;
-            float factor = 1.0f;
+            float factor = 0.5f;
 
             if ((time > low_phase_dur_ms) && (time < (low_phase_dur_ms + high_phase_dur_ms))) {
-                factor = 2.0f;
+                factor = 1.0f;
             }
 
             comp_test.push_back(
@@ -48,36 +48,37 @@ int main() {
         }
     }
 
-    int attack = 10;
-    Enveloppe env_in{attack, 96000};
+    int attack = 4;
+    Enveloppe env_in{10, 96000};
     std::vector<float> enveloppe_in;
 
     for (auto& s : comp_test) {
-        enveloppe_in.push_back((env_in.push_sample(s)));
+        enveloppe_in.push_back(10 * log10(env_in.push_sample(s)));
     }
 
     std::vector<float> gain_red;
     std::vector<float> signal_out;
-    Dynamics dyn{[](float level_lin) {
-        float threshold = 0.72f;
-        if (level_lin > threshold) {
-            return 0.5f * level_lin + 0.5f * threshold;
+    Dynamics dyn{[](float level_db) {
+        float threshold = -4;
+        float ratio = 2.0f;
+
+        if (level_db > threshold) {
+            return -(level_db - threshold) * ratio;
         } else {
-            return 1.0f * level_lin;
+            return 0.0f;
         }
     }, attack, 70, 50, 96000};
 
     for (auto& s : comp_test) {
-        gain_red.push_back((dyn.push_sample(s)));
+        gain_red.push_back(20.0f * log10(dyn.push_sample(s)));
     }
 
     for (int i = 0; i < comp_test.size(); i++) {
-        signal_out.push_back(comp_test[i] * gain_red[i]);
+        signal_out.push_back(comp_test[i] * std::pow(10, gain_red[i] / 20));
     }
 
     plt::plot(gain_red);
-    //plt::plot(enveloppe_out);
-    plt::plot(enveloppe_in);
+   // plt::plot(enveloppe_in);
     plt::show();
 
     plt::plot(signal_out);
