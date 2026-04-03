@@ -1,4 +1,4 @@
-add_library(OpenDSP SHARED
+add_library(OpenDSP STATIC
         dsp.cpp
         simd/simd_op.h
         filter/iirfilter.h
