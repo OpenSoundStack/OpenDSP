@@ -30,6 +30,9 @@ Dynamics::Dynamics(
     m_deriv_counter = 0;
     m_last_attack_value = 1.0f;
 
+    m_adsr_att_coef = 1.0f;
+    m_adsr_rel_coef = 1.0f;
+
     m_enveloppe = 0.0f;
     m_delayed_enveloppe = 0.0f;
 
