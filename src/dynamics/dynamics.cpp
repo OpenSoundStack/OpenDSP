@@ -17,8 +17,7 @@ Dynamics::Dynamics(
     int attack_ms, int release_ms, int hold_ms,
     int sampling_rate
 )
-    : m_signal_enveloppe_attack(attack_ms, sampling_rate),
-    m_signal_enveloppe_release(release_ms, sampling_rate)
+    : m_signal_enveloppe(10, sampling_rate)
 {
     m_attack_ms = attack_ms;
     m_release_ms = release_ms;
@@ -30,6 +29,9 @@ Dynamics::Dynamics(
     m_last_attack_value = 1.0f;
     m_last_release_value = 1.0f;
 
+    m_current_enveloppe = 1.0f;
+    m_enveloppe = 0.0f;
+
     m_hold_time_sample = m_hold_ms * (sampling_rate / 1000);
     m_hold_counter = 0;
 
@@ -38,75 +40,97 @@ Dynamics::Dynamics(
     m_state = DynamicState::DYN_RELEASE;
 
     init_delay_buffer();
+    make_adsr_coefs();
 }
 
 Dynamics::~Dynamics() {
 
 }
 
+void Dynamics::make_adsr_coefs() {
+    m_adsr_att_coef = exp(-1.0f / (m_attack_ms * 96.0f));
+    m_adsr_rel_coef = exp(-1.0f / (m_release_ms * 96.0f));
+}
+
+float Dynamics::adsr_process(float sample) {
+    float sq_mean_enveloppe = m_signal_enveloppe.push_sample(sample);
+    float level_lin_enveloppe = std::sqrt(sq_mean_enveloppe);
+
+    float exp_coef = m_state == DynamicState::DYN_ATTACK ? m_adsr_att_coef : m_adsr_rel_coef;
+
+    float coef = exp_coef * (m_enveloppe - level_lin_enveloppe);
+    m_enveloppe = level_lin_enveloppe + coef;
+    m_delayed_enveloppe = process_delay(m_enveloppe);
+
+    return level_lin_enveloppe;
+}
+
 float Dynamics::push_sample(float sample) {
-    float sq_mean_attack = m_signal_enveloppe_attack.push_sample(sample);
-    float level_lin_attack = std::sqrt(sq_mean_attack);
+    float level_lin_enveloppe = adsr_process(sample);
 
-    float sq_mean_release = m_signal_enveloppe_release.push_sample(sample);
-    float level_lin_release = process_delay(std::sqrt(sq_mean_release));
+    float selected_enveloppe = m_state == DynamicState::DYN_RELEASE ? m_delayed_enveloppe : m_enveloppe;
 
-    float reduction_attack = 1.0f;
-    if (level_lin_attack != 0.0f) {
-        reduction_attack = m_transfer_function(level_lin_attack) / level_lin_attack;
+    float transfer_ratio = 1.0f;
+    if (level_lin_enveloppe != 0.0f) {
+        transfer_ratio = m_transfer_function(selected_enveloppe) / selected_enveloppe;
     }
 
-    float reduction_release = 1.0f;
-    if (level_lin_release != 0.0f) {
-        reduction_release = m_transfer_function(level_lin_release) / level_lin_release;
-    }
-
-    float diff_env = differentiate_enveloppe(level_lin_attack);
     constexpr float hysteresis = 0.001f;
 
+    static int time = 0;
+    time++;
+
+    float gain = 1.0f;
+    switch (m_state) {
+        case DynamicState::DYN_ATTACK:
+            gain = transfer_ratio;
+            break;
+        case DynamicState::DYN_RELEASE:
+            gain = transfer_ratio;
+            break;
+        case DynamicState::DYN_HOLD:
+            m_hold_counter--;
+            gain = m_last_attack_value;
+
+            break;
+        default:
+            break;
+    }
+
+    float diff_env = differentiate_enveloppe(m_enveloppe);
     switch (m_state) {
         case DynamicState::DYN_ATTACK:
             if (diff_env < -hysteresis) {
-                m_state = DynamicState::DYN_HOLD;
+                m_state = m_hold_ms == 0 ? DynamicState::DYN_RELEASE : DynamicState::DYN_HOLD;
                 m_hold_counter = m_hold_time_sample;
+
+                TRACE_STATE(HOLD, time);
             }
             break;
         case DynamicState::DYN_RELEASE:
             if (diff_env > hysteresis) {
                 m_state = DynamicState::DYN_ATTACK;
+                TRACE_STATE(ATTACK, time);
             }
             break;
         case DynamicState::DYN_HOLD:
             if (m_hold_counter == 0) {
                 m_state = DynamicState::DYN_RELEASE;
+                TRACE_STATE(RELEASE, time);
             }
+
+            if (diff_env > hysteresis) {
+                m_state = DynamicState::DYN_ATTACK;
+                TRACE_STATE(ATTACK, time);
+            }
+
             break;
         default:
             break;
     }
 
-    float reduction = 1.0f;
-
-    switch (m_state) {
-        case DynamicState::DYN_ATTACK:
-            reduction = reduction_attack;
-            m_last_attack_value = reduction_attack;
-            break;
-        case DynamicState::DYN_RELEASE:
-            reduction = reduction_release;
-            break;
-        case DynamicState::DYN_LOCKED:
-            reduction = m_last_attack_value;
-            break;
-        case DynamicState::DYN_HOLD:
-            reduction = m_last_attack_value;
-            m_hold_counter--;
-            break;
-        default:
-            break;
-    }
-
-    return reduction;
+    m_last_attack_value = gain;
+    return gain;
 }
 
 float Dynamics::differentiate_enveloppe(float enveloppe_sample) {

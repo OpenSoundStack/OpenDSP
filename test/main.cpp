@@ -48,7 +48,7 @@ int main() {
         }
     }
 
-    int attack = 70;
+    int attack = 10;
     Enveloppe env_in{attack, 96000};
     std::vector<float> enveloppe_in;
 
@@ -65,7 +65,7 @@ int main() {
         } else {
             return 1.0f * level_lin;
         }
-    }, attack, 150, 10, 96000};
+    }, attack, 150, 20, 96000};
 
     for (auto& s : comp_test) {
         gain_red.push_back((dyn.push_sample(s)));
