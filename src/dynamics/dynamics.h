@@ -15,11 +15,8 @@
 
 #include <functional>
 #include <list>
-#include <iostream>
 
 #include "enveloppe.h"
-
-#define TRACE_STATE(state, time) std::cout << #state << " : " << (time) * (1/96.0f) << " ms" << std::endl
 
 enum class DynamicState {
     DYN_RELEASE,
@@ -56,7 +53,6 @@ private:
     std::function<float(float)> m_transfer_function;
 
     Enveloppe m_signal_enveloppe;
-
     std::list<float> m_delay_buffer;
 
     int m_attack_ms;
@@ -71,15 +67,12 @@ private:
 
     float m_last_env_value;
     float m_current_env_value;
-    float m_enveloppe;
-    float m_delayed_enveloppe;
     int m_deriv_counter;
 
+    float m_enveloppe;
+    float m_delayed_enveloppe;
+
     float m_last_attack_value;
-    float m_last_release_value;
-
-    float m_current_enveloppe;
-
     DynamicState m_state;
 };
 

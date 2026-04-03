@@ -12,6 +12,8 @@
 
 #include "dynamics.h"
 
+#include <cmath>
+
 Dynamics::Dynamics(
     std::function<float(float)> transfer_function,
     int attack_ms, int release_ms, int hold_ms,
@@ -27,10 +29,9 @@ Dynamics::Dynamics(
     m_current_env_value = 0.0f;
     m_deriv_counter = 0;
     m_last_attack_value = 1.0f;
-    m_last_release_value = 1.0f;
 
-    m_current_enveloppe = 1.0f;
     m_enveloppe = 0.0f;
+    m_delayed_enveloppe = 0.0f;
 
     m_hold_time_sample = m_hold_ms * (sampling_rate / 1000);
     m_hold_counter = 0;
@@ -48,8 +49,8 @@ Dynamics::~Dynamics() {
 }
 
 void Dynamics::make_adsr_coefs() {
-    m_adsr_att_coef = exp(-1.0f / (m_attack_ms * 96.0f));
-    m_adsr_rel_coef = exp(-1.0f / (m_release_ms * 96.0f));
+    m_adsr_att_coef = std::exp(-1.0f / (m_attack_ms * 96.0f));
+    m_adsr_rel_coef = std::exp(-1.0f / (m_release_ms * 96.0f));
 }
 
 float Dynamics::adsr_process(float sample) {
@@ -67,7 +68,6 @@ float Dynamics::adsr_process(float sample) {
 
 float Dynamics::push_sample(float sample) {
     float level_lin_enveloppe = adsr_process(sample);
-
     float selected_enveloppe = m_state == DynamicState::DYN_RELEASE ? m_delayed_enveloppe : m_enveloppe;
 
     float transfer_ratio = 1.0f;
@@ -76,9 +76,6 @@ float Dynamics::push_sample(float sample) {
     }
 
     constexpr float hysteresis = 0.001f;
-
-    static int time = 0;
-    time++;
 
     float gain = 1.0f;
     switch (m_state) {
@@ -103,25 +100,20 @@ float Dynamics::push_sample(float sample) {
             if (diff_env < -hysteresis) {
                 m_state = m_hold_ms == 0 ? DynamicState::DYN_RELEASE : DynamicState::DYN_HOLD;
                 m_hold_counter = m_hold_time_sample;
-
-                TRACE_STATE(HOLD, time);
             }
             break;
         case DynamicState::DYN_RELEASE:
             if (diff_env > hysteresis) {
                 m_state = DynamicState::DYN_ATTACK;
-                TRACE_STATE(ATTACK, time);
             }
             break;
         case DynamicState::DYN_HOLD:
             if (m_hold_counter == 0) {
                 m_state = DynamicState::DYN_RELEASE;
-                TRACE_STATE(RELEASE, time);
             }
 
             if (diff_env > hysteresis) {
                 m_state = DynamicState::DYN_ATTACK;
-                TRACE_STATE(ATTACK, time);
             }
 
             break;
