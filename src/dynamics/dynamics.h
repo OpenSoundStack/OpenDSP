@@ -35,6 +35,10 @@ public:
      */
     float push_sample(float sample);
 
+    void set_attack(int attack_ms);
+    void set_release(int release_ms);
+    void set_hold(int hold_ms);
+
 private:
     float differentiate_enveloppe(float enveloppe_sample);
     void init_delay_buffer();
@@ -42,6 +46,8 @@ private:
 
     float process_delay(float sample);
     float adsr_process(float sample);
+
+    void adjust_delay_buffer();
 
     std::function<float(float)> m_transfer_function;
 
@@ -67,6 +73,8 @@ private:
 
     float m_last_attack_value;
     DynamicState m_state;
+
+    int m_sampling_rate;
 };
 
 #endif //OALIVESYSTEM_DYNAMICS_H

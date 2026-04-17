@@ -36,6 +36,8 @@ Dynamics::Dynamics(
 
     m_state = DynamicState::DYN_RELEASE;
 
+    m_sampling_rate = sampling_rate;
+
     init_delay_buffer();
     make_adsr_coefs();
 }
@@ -143,4 +145,34 @@ float Dynamics::process_delay(float sample) {
     m_delay_buffer.pop_front();
 
     return oldest_samples;
+}
+
+void Dynamics::set_attack(int attack_ms) {
+    m_attack_ms = attack_ms;
+}
+
+void Dynamics::set_release(int release_ms) {
+    m_release_ms = release_ms;
+}
+
+void Dynamics::set_hold(int hold_ms) {
+    m_hold_ms = hold_ms;
+    m_hold_time_sample = m_hold_ms * (m_sampling_rate / 1000);
+
+    adjust_delay_buffer();
+}
+
+void Dynamics::adjust_delay_buffer() {
+    int current_sample_delay = (int)m_delay_buffer.size();
+    int delta = (int)m_hold_time_sample - current_sample_delay;
+
+    if (delta > 0) {
+        for (int i = 0; i < delta; i++) {
+            m_delay_buffer.push_back(0.0f);
+        }
+    } else if (delta < 0) {
+        for (int i = 0; i < -delta; i++) {
+            m_delay_buffer.pop_front();
+        }
+    }
 }
