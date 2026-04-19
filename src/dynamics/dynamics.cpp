@@ -149,10 +149,12 @@ float Dynamics::process_delay(float sample) {
 
 void Dynamics::set_attack(int attack_ms) {
     m_attack_ms = attack_ms;
+    make_adsr_coefs();
 }
 
 void Dynamics::set_release(int release_ms) {
     m_release_ms = release_ms;
+    make_adsr_coefs();
 }
 
 void Dynamics::set_hold(int hold_ms) {
