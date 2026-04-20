@@ -72,7 +72,7 @@ float Dynamics::push_sample(float sample) {
     float transfer_ratio = 1.0f;
     if (level_lin_enveloppe != 0.0f) {
         transfer_ratio = m_transfer_function(selected_enveloppe);
-        transfer_ratio = std::pow(10.0f, transfer_ratio / 20.0f);
+        transfer_ratio = std::pow(10.0f, transfer_ratio / 10.0f);
     }
 
     constexpr float hysteresis = 0.001f;
