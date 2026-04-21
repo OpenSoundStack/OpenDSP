@@ -6,7 +6,7 @@
 #ifndef OALIVESYSTEM_ENVELOPPE_H
 #define OALIVESYSTEM_ENVELOPPE_H
 
-#include <list>
+#include <queue>
 #include <cmath>
 
 class Enveloppe {
@@ -19,9 +19,9 @@ public:
     void set_time_constant(int new_attack);
 private:
     void init_buffers();
-    void update_buffer(std::list<float>& buffer, float& acc, float new_sample);
+    void update_buffer(std::queue<float>& buffer, float& acc, float new_sample);
 
-    std::list<float> m_enveloppe_buffer;
+    std::queue<float> m_enveloppe_buffer;
     float m_enveloppe_acc;
 
     int m_time_constant;

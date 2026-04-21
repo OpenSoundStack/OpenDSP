@@ -32,18 +32,18 @@ float Enveloppe::push_sample(float sample) {
 
 void Enveloppe::init_buffers() {
     for (int i = 0; i < m_time_constant * (m_sampling_rate / 1000); i++) {
-        m_enveloppe_buffer.push_back(0.0f);
+        m_enveloppe_buffer.push(0.0f);
     }
 
     m_enveloppe_acc = 0.0f;
 }
 
-void Enveloppe::update_buffer(std::list<float> &buffer, float& acc, float new_sample) {
+void Enveloppe::update_buffer(std::queue<float> &buffer, float& acc, float new_sample) {
     float sample2 = new_sample * new_sample;
 
-    buffer.push_back(sample2);
+    buffer.push(sample2);
     float first_val = buffer.front();
-    buffer.pop_front();
+    buffer.pop();
 
     acc += sample2;
     acc -= first_val;

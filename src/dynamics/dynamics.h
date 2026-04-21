@@ -7,7 +7,7 @@
 #define OALIVESYSTEM_DYNAMICS_H
 
 #include <functional>
-#include <list>
+#include <queue>
 
 #include "enveloppe.h"
 
@@ -52,7 +52,7 @@ private:
     std::function<float(float)> m_transfer_function;
 
     Enveloppe m_signal_enveloppe;
-    std::list<float> m_delay_buffer;
+    std::queue<float> m_delay_buffer;
 
     int m_attack_ms;
     int m_release_ms;

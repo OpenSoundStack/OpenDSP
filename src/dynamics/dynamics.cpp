@@ -136,13 +136,16 @@ float Dynamics::differentiate_enveloppe(float enveloppe_sample) {
 }
 
 void Dynamics::init_delay_buffer() {
-    m_delay_buffer = std::list<float>(m_hold_time_sample, 0.0f);
+    m_delay_buffer = std::queue<float>();
+    for (int i = 0; i < m_hold_time_sample; i++) {
+        m_delay_buffer.push(0.0f);
+    }
 }
 
 float Dynamics::process_delay(float sample) {
-    m_delay_buffer.push_back(sample);
+    m_delay_buffer.push(sample);
     float oldest_samples = m_delay_buffer.front();
-    m_delay_buffer.pop_front();
+    m_delay_buffer.pop();
 
     return oldest_samples;
 }
@@ -170,11 +173,13 @@ void Dynamics::adjust_delay_buffer() {
 
     if (delta > 0) {
         for (int i = 0; i < delta; i++) {
-            m_delay_buffer.push_back(0.0f);
+            m_delay_buffer.push(0.0f);
         }
     } else if (delta < 0) {
         for (int i = 0; i < -delta; i++) {
-            m_delay_buffer.pop_front();
+            if (!m_delay_buffer.empty()) {
+                m_delay_buffer.pop();
+            }
         }
     }
 }
