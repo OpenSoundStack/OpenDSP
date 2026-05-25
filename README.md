@@ -4,7 +4,7 @@ processing implementations.
 
 # Features
 Full floating-point operation, optimised with the NEON instruction set whenever possible.  
-Every coefficients are computed dynamically, not LUTs are used.
+Every coefficients are computed dynamically, no LUTs are used.
 
 ### Filtering
 IIR Filter with analog based filters approximated with the bilinear transform. All filters types (HPF, LPF, BPF) are
