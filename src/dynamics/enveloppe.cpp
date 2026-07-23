@@ -10,6 +10,11 @@ Enveloppe::Enveloppe(int time_constant, int sampling_rate) {
     m_sampling_rate = sampling_rate;
     m_delay_samples = 0;
 
+    m_y = 0.0;
+    m_t = 0.0;
+    m_compensation = 0.0;
+    m_enveloppe_acc = 0.0;
+
     init_buffers();
 }
 
@@ -26,7 +31,7 @@ void Enveloppe::set_time_constant(int new_attack) {
  * @return Squared mean of the signal
  */
 float Enveloppe::push_sample(float sample) {
-    update_buffer(m_enveloppe_buffer, m_enveloppe_acc, sample);
+    update_buffer(m_enveloppe_buffer, sample);
     return  m_enveloppe_acc / (float)(m_enveloppe_buffer.size());
 }
 
@@ -38,13 +43,17 @@ void Enveloppe::init_buffers() {
     m_enveloppe_acc = 0.0f;
 }
 
-void Enveloppe::update_buffer(std::queue<float> &buffer, float& acc, float new_sample) {
+void Enveloppe::update_buffer(std::queue<float> &buffer, float new_sample) {
     float sample2 = new_sample * new_sample;
 
     buffer.push(sample2);
     float first_val = buffer.front();
     buffer.pop();
 
-    acc += sample2;
-    acc -= first_val;
+    double x = sample2 - first_val;
+
+    m_y = x - m_compensation;
+    m_t = m_enveloppe_acc + m_y;
+    m_compensation = (m_t - m_enveloppe_acc) - m_y;
+    m_enveloppe_acc = m_t;
 }

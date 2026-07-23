@@ -19,10 +19,14 @@ public:
     void set_time_constant(int new_attack);
 private:
     void init_buffers();
-    void update_buffer(std::queue<float>& buffer, float& acc, float new_sample);
+    void update_buffer(std::queue<float>& buffer, float new_sample);
 
     std::queue<float> m_enveloppe_buffer;
-    float m_enveloppe_acc;
+
+    double m_enveloppe_acc;
+    double m_y;
+    double m_t;
+    double m_compensation;
 
     int m_time_constant;
     int m_sampling_rate;
