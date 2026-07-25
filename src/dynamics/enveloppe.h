@@ -9,6 +9,8 @@
 #include <queue>
 #include <cmath>
 
+#include "utils/precise_acc.h"
+
 class Enveloppe {
 public:
     Enveloppe(int time_constant, int sampling_rate);
@@ -23,10 +25,7 @@ private:
 
     std::queue<float> m_enveloppe_buffer;
 
-    double m_enveloppe_acc;
-    double m_y;
-    double m_t;
-    double m_compensation;
+    PreciseAcc m_accumulator;
 
     int m_time_constant;
     int m_sampling_rate;
