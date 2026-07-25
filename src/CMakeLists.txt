@@ -15,6 +15,8 @@ add_library(OpenDSP STATIC
         dynamics/enveloppe.cpp
         dynamics/dynamics.h
         dynamics/dynamics.cpp
+        utils/precise_acc.h
+        utils/precise_acc.cpp
 )
 
 target_include_directories(OpenDSP PUBLIC ${PROJECT_SOURCE_DIR}/src)
